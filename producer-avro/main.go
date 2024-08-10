@@ -1,16 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
-	"github.com/illenko/kafka/common-avro/avro"
-	"io/ioutil"
 	"log"
 	"math/rand/v2"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/illenko/kafka/common-avro/avro"
 	"github.com/riferrei/srclient"
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 )
@@ -65,7 +65,7 @@ func getSchema(schemaRegistryURL, topic, schemaFile string) (*srclient.Schema, e
 	client := srclient.NewSchemaRegistryClient(schemaRegistryURL)
 	schema, err := client.GetLatestSchema(topic)
 	if schema == nil {
-		schemaBytes, err := ioutil.ReadFile(schemaFile)
+		schemaBytes, err := os.ReadFile(schemaFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read schema file: %v", err)
 		}
@@ -103,18 +103,13 @@ func generateRandomEvent() avro.TransactionEvent {
 }
 
 func serializeEvent(schema *srclient.Schema, event avro.TransactionEvent) ([]byte, error) {
-	value, err := json.Marshal(event)
+	var buf bytes.Buffer
+	err := event.Serialize(&buf)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal event: %v", err)
+		return nil, err
 	}
-	native, _, err := schema.Codec().NativeFromTextual(value)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert to native: %v", err)
-	}
-	valueBytes, err := schema.Codec().BinaryFromNative(nil, native)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert to binary: %v", err)
-	}
+
+	valueBytes := buf.Bytes()
 
 	schemaIDBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(schemaIDBytes, uint32(schema.ID()))
