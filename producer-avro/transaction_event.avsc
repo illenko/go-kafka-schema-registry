@@ -1,0 +1,35 @@
+{
+  "type": "record",
+  "name": "TransactionEvent",
+  "namespace": "com.fintech",
+  "fields": [
+    {
+      "name": "transactionId",
+      "type": "string"
+    },
+    {
+      "name": "userId",
+      "type": "string"
+    },
+    {
+      "name": "amount",
+      "type": "double"
+    },
+    {
+      "name": "currency",
+      "type": "string"
+    },
+    {
+      "name": "timestamp",
+      "type": "long"
+    },
+    {
+      "name": "status",
+      "type": "string"
+    },
+    {
+      "name": "eventType",
+      "type": "string"
+    }
+  ]
+}
